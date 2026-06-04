@@ -11,21 +11,28 @@
 <body class="cart-page">
 
   <!-- NAV (matches your existing nav) -->
- <nav>
-  <span><img src="images/Logo.jpg" class="nav-logo"></span>
-  <span><div class="nav-logo-text">LarryB</div></span>
-  <ul class="nav-links">
-    <li><a href="#">New Arrivals</a></li>
-    <li><a href="#">Best Sellers</a></li>
-    <li><a href="#">Accessories</a></li>
-  </ul>
-  <div class="cart-icon">
-    <a href="cart.html">
-      <i class="fa fa-shopping-bag" id="cart-btn"></i>
-      <span id="cart-count">0</span>
-    </a>
-  </div>
-</nav>
+  <nav>
+     <span><img src="images/Logo.jpg" class="nav-logo"></span>  
+    <span><div class="nav-logo-text">LarryB</div></span>
+    <ul class="nav-links">
+      <li><a href="#">New Arrivals</a></li>
+      <li><a href="#">Best Sellers</a></li>
+      <li><a href="#">Accessories</a></li>
+    </ul>
+    <div id="cart-modal">
+      <div class="cart-box">
+        <h2>Your Cart</h2>
+        <div id="cart-items"></div>
+      </div>
+    </div>
+    <div class="cart-icon">
+      <a href="cart.html">
+        <i class="fa fa-shopping-bag" id="cart-btn"></i>
+        <span id="cart-count">0</span>
+      </a>
+      <i class="fa fa-contact" id="contact-btn"></i>
+    </div>
+  </nav>
 
   <!-- CART PAGE HEADER -->
   <div class="cart-page-header">

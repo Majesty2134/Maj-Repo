@@ -5,6 +5,7 @@
   <title>Collections</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body class="collections-page">
   <nav>
@@ -127,7 +128,7 @@
 
     <div class="collection-card" data-category="gowns" data-type="gowns" data-price="25000">
       <img src="images/Theresa-8.jpg"
-           data-hover="images/Theresa-9.png"
+           data-hover="images/theresa.png"
            data-name="Collection Piece 8"
            data-price="25000"
            data-category="gowns"
@@ -146,7 +147,7 @@
       data-img="images/gown-collage.png">Add to Cart</button>
     </div>
 
-    <div class="collection-card" data-category="gowns" data-type="gowns" data-price="25000">
+    <div class="collection-card" data-category="gowns" data-type="gowns" data-price="25000" id="collection-10">
       <img src="images/collection-10.png"
            data-name="Collection Piece 10"
            data-price="25000"
@@ -156,53 +157,81 @@
       data-img="images/collection-10.png">Add to Cart</button>
     </div>
 
+     <div class="collection-card" data-category="gowns" data-type="gowns" data-price="25000" id="collection-11">
+      <img src="images/dress1.jpg"
+           data-name="Collection Piece 11"
+           data-hover="images/dress2.jpg"
+           data-price="25000"
+           data-category="gowns"
+           onclick="goToProduct(this)">
+      <button class="collection-add-to-cart" data-name="Collection Piece 11" data-price="25000"
+      data-img="images/dress1.jpg">Add to Cart</button>
+    </div>
+
+    <div class="collection-card" data-category="gowns" data-type="gowns" data-price="25000" id="collection-11">
+      <img src="images/chi.png"
+           data-name="Collection Piece 11"
+           data-hover="images/chika.png"
+           data-price="25000"
+           data-category="gowns"
+           onclick="goToProduct(this)">
+            <span class="collection-price">₦25,000</span>
+      <button class="collection-add-to-cart" data-name="Collection Piece 11" data-price="25000"
+      data-img="images/chi.png">Add to Cart</button>
+    </div>
+
   </div>
 </section>
-  <footer class="footer-section">
-    <p class="footer-text">Designed With Intention</p>
-    <div class="card-container">
-      <div class="footer-card">
-        <img src="images/Black_check_icon-removebg-preview.png" class="card-image" id="card-image-1" alt="check-mark">
-        <div class="footer-info">
-          <h2 class="footer-image-name">Premium Materials</h2>
-          <p class="footer-description">Carefully selected fabrics for lasting<br> quality and comfort.</p>
-        </div>
-      </div>
-      <div class="footer-card">
-        <img src="images/Scissors-removebg-1.png" class="card-image" id="card-image-2" alt="scissors-icon">
-        <div class="footer-info">
-          <h2 class="footer-image-name">Timeless Silhouettes</h2>
-          <p class="footer-description">Designs that transcends trends and<br>elevate your style.</p>
-        </div>
-      </div>
-      <div class="footer-card">
-        <img src="images/Sewing_Machine-1.png" class="card-image" id="card-image-3" alt="sewing-machine-icon">
-        <div class="footer-info">
-          <h2 class="footer-image-name">Precision Tailoring</h2>
-          <p class="footer-description">Expert craftsmanship for the perfect fit.</p>
-        </div>
-      </div>
-      <div class="footer-card">
-        <img src="images/Mannequin.png" class="card-image" id="card-image-4" alt="mannequin icon">
-        <div class="footer-info">
-          <h2 class="footer-image-name">Refined Collection</h2>
-          <p class="footer-image-description">Curated pieces for a wardrope that<br> works beautifully</p>
-        </div>
-      </div>
-    </div>
-    <div class="contact">
-      <h5 class="contact-text">Get In Touch</h5>
-      <div class="contact-card">
-        <span id="email-ad"> ✉️ <a href="https://mail.google.com/mail/?view=cm&fs=1&to=majestyemeka12@gmail.com">majestyemeka12@gmail.com</a></span>
-        <div class="social-media">
-          <p id="link-text">Let's connect</p>
-          <a href="https://www.instagram.com/larryb_casuals">→instagram</a>
-          <a href="https://www.tiktok.com/larryb_casuals">→tiktok</a>
-          <a href="https://wa.me/09015490089">→whatsapp</a>
-        </div>
-      </div>
-    </div>
-  </footer>
+                <footer class="footer-section">
+                    <p class="footer-text">Designed With Intention</p>
+                    <div class="card-container"> 
+                    <div class="footer-card">
+                        <img src="images/Black_check_icon-removebg-preview.png" class="card-image" id="card-image-1" alt="check-mark">
+                         <div class="footer-info"> 
+                        <h2 class="footer-image-name">Premium Materials</h2>
+                        <p class="footer-description">Carefully selected fabrics for lasting quality and comfort.</p>
+                            </div>
+                    </div>
+
+                     <div class="footer-card">
+                        <img src="images/Scissors-removebg-1.png" class="card-image" id="card-image-2" alt="scissors-icon">
+                             <div class="footer-info"> 
+                        <h2 class="footer-image-name">Timeless Silhouettes</h2>
+                        <p class="footer-description">Designs that transcends trends and elevate your style.</p>
+                                </div>
+                    </div>
+
+                    <div class="footer-card">
+                        <img src="images/Sewing_Machine-1.png" class="card-image" id="card-image-3" alt="sewing-machine-icon">
+                        <div class="footer-info"> 
+                        <h2 class="footer-image-name">Precision Tailoring</h2>
+                        <p class="footer-description">Expert craftsmanship for the perfect fit.</p>
+                        </div>
+                    </div>
+
+                    <div class="footer-card">
+                        <img src="images/Mannequin.png" class="card-image" id="card-image-4" alt="mannequin icon">
+                         <div class="footer-info"> 
+                        <h2 class="footer-image-name">Refined Collection</h2>
+                        <p class="footer-image-description">Curated pieces for a wardrobe that works beautifully</p>
+                        </div>
+                    </div>
+                  </div>
+   
+                  <div class="contact"> 
+                  <h5 class="contact-text">Get In Touch</h5>
+                  <div class="contact-card"> 
+                 <span id="email-ad"> ✉️ <a href="https://mail.google.com/mail/?view=cm&fs=1&to=Lawrenceblessing681@gmail.com">
+                     Lawrenceblessing681@gmail.com
+                    </a></span>
+                    <div class="social-media"> 
+                   <p id="link-text">Let's connect</p>
+                    <a href="https://www.instagram.com/larryb_casuals">→instagram</a>
+                    <a href="https://www.tiktok.com/larryb_casuals">→tiktok</a>
+                    <a href="https://wa.me/09015490089">→whatsapp</a>
+                    </div>
+                  </div>
+</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script src="script.js"></script>
