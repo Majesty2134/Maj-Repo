@@ -35,15 +35,47 @@
   const container = document.getElementById('colourSwatches');
   if (!container) return;
 
+  const modal      = document.getElementById('customColourModal');
+  const input       = document.getElementById('customColourInput');
+  const confirmBtn  = document.getElementById('customColourConfirm');
+  const cancelBtn   = document.getElementById('customColourCancel');
+  let pendingBtn    = null; // the custom swatch button waiting on input
+
   container.addEventListener('click', function(e) {
     const btn = e.target.closest('.swatch');
     if (!btn) return;
+
+    if (btn.dataset.colour === 'custom') {
+      pendingBtn = btn;
+      input.value = '';
+      modal.classList.add('open');
+      input.focus();
+      return; // wait for modal confirm before activating swatch
+    }
+
     container.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
     btn.classList.add('active');
     checkReady();
   });
-})();
 
+  confirmBtn.addEventListener('click', function() {
+    const note = input.value.trim();
+    if (!note || !pendingBtn) return;
+
+    pendingBtn.dataset.customNote = note;
+    container.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    pendingBtn.classList.add('active');
+    checkReady();
+
+    modal.classList.remove('open');
+    pendingBtn = null;
+  });
+
+  cancelBtn.addEventListener('click', function() {
+    modal.classList.remove('open');
+    pendingBtn = null;
+  });
+})();
 
 // =============================================
 // SIZE SELECTOR
@@ -102,36 +134,6 @@ function checkReady() {
 
 
 // =============================================
-// ADD TO CART
-// =============================================
-(function initAddToCart() {
-  const btn = document.getElementById('addToCart');
-  if (!btn) return;
-
-  btn.addEventListener('click', function() {
-    const colour = document.querySelector('#colourSwatches .swatch.active');
-    const size   = document.querySelector('#sizeGrid .size-btn.active');
-
-    if (!colour) { alert('Please select a colour.'); return; }
-    if (!size)   { alert('Please select a size.');   return; }
-
-    const badge = document.getElementById('cart-count');
-    if (badge) {
-      const qty = parseInt(document.getElementById('qtyValue').textContent) || 1;
-      badge.textContent = parseInt(badge.textContent || 0) + qty;
-    }
-
-    btn.textContent = '✓ Added!';
-    btn.style.background = '#2EAE5E';
-    setTimeout(function() {
-      btn.textContent = 'Add to cart';
-      btn.style.background = '';
-    }, 2000);
-  });
-})();
-
-
-// =============================================
 // ACCORDION
 // =============================================
 (function initAccordion() {
@@ -149,29 +151,26 @@ function checkReady() {
   });
 })();
 
-document.querySelectorAll('.collection-card img[data-hover]').forEach(img => {
-  const hoverImg = document.createElement('img');
-  hoverImg.src = img.dataset.hover;
-  hoverImg.classList.add('hover-img');
-  hoverImg.onclick = () => goToProduct(img); // keeps the click working
-  img.parentElement.appendChild(hoverImg);
-});
 
-// ============================================
-//   LARRY B — ADD TO CART (add to product.js)
-//   Paste this into your existing product.js
-//   Replace or update your addToCart handler
-// ============================================
-
-const CART_KEY = 'larryb_cart';
+// =============================================
+// CART SYSTEM
+// =============================================
+const CART_KEY     = 'larryb_cart';
+const CART_VERSION = 2;
 
 function getCart() {
-  try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
-  catch { return []; }
+  try {
+    const saved = JSON.parse(localStorage.getItem(CART_KEY));
+    if (!saved || saved.version !== CART_VERSION) {
+      localStorage.removeItem(CART_KEY);
+      return [];
+    }
+    return saved.items || [];
+  } catch { return []; }
 }
 
 function saveCart(items) {
-  localStorage.setItem(CART_KEY, JSON.stringify(items));
+  localStorage.setItem(CART_KEY, JSON.stringify({ version: CART_VERSION, items }));
 }
 
 function updateCartBadge() {
@@ -181,49 +180,45 @@ function updateCartBadge() {
   if (badge) badge.textContent = total;
 }
 
-// Call this on page load so the badge is always correct
 updateCartBadge();
 
-// Wire up the Add to Cart button
+// =============================================
+// ADD TO CART
+// =============================================
 document.getElementById('addToCart').addEventListener('click', function () {
-  // --- Read current selections ---
-  const name    = document.getElementById('product-title').textContent;
- const params = new URLSearchParams(window.location.search);
-const rawPrice = parseFloat(params.get('price')) || 0;
-  const qty     = parseInt(document.getElementById('qtyValue').textContent) || 1;
+  const colour = document.querySelector('.swatch.active');
+  const size   = document.querySelector('.size-btn.active');
 
-  // Get selected colour
-  const activeColour = document.querySelector('.swatch.active');
-  const colour = activeColour ? activeColour.getAttribute('data-colour') : '';
+  if (!colour) { alert('Please select a colour.'); return; }
+  if (!size)   { alert('Please select a size.');   return; }
 
-  // Get selected size
-  const activeSize = document.querySelector('.size-btn.active');
-  const size = activeSize ? activeSize.getAttribute('data-size') : '';
+  const name     = document.getElementById('product-title').textContent;
+  const params   = new URLSearchParams(window.location.search);
+  const rawPrice = parseFloat(params.get('price')) || 0;
+  const qty      = parseInt(document.getElementById('qtyValue').textContent) || 1;
+  const colourVal = colour.getAttribute('data-colour');
+  const colourNote = colour.dataset.customNote || null;
+  const sizeVal   = size.getAttribute('data-size');
+  const imgEl     = document.getElementById('product-main-img');
+  const img       = imgEl ? imgEl.src : '';
 
-  // Get product image
-  const imgEl = document.getElementById('product-main-img');
-  const img   = imgEl ? imgEl.src : '';
+  const id = btoa(name + colourVal + sizeVal).replace(/[^a-zA-Z0-9]/g, '').slice(0, 20);
 
-  // Build a unique ID from name + colour + size
-  const id = btoa(name + colour + size).replace(/[^a-zA-Z0-9]/g, '').slice(0, 20);
-
-  // Add or update in cart
   const cart     = getCart();
   const existing = cart.find(i => i.id === id);
 
   if (existing) {
     existing.qty += qty;
   } else {
-    cart.push({ id, name, colour, size, price: rawPrice, qty, img });
+    cart.push({ id, name, colour: colourVal, colourNote, size: sizeVal, price: rawPrice, qty, img });
   }
 
   saveCart(cart);
   updateCartBadge();
 
-  // Visual feedback on button
   const btn = document.getElementById('addToCart');
   const original = btn.textContent;
-  btn.textContent = 'Added!';
+  btn.textContent = '✓ Added!';
   btn.style.background = '#2EAE5E';
   setTimeout(() => {
     btn.textContent = original;

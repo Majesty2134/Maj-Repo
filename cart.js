@@ -3,23 +3,27 @@
 // ============================================
 
 const CART_KEY = 'larryb_cart';
+const CART_VERSION = 2;
 const TAX_RATE = 0.075;
-let shipCost = 0;
-let shipLabel = 'Free';
-let discountApplied = false;
+let discountApplied = 0; // now a decimal percentage, e.g. 0.10 for 10% off (0 = no discount)
 
 // ---------- HELPERS ----------
 
 function getCart() {
-  try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
-  catch { return []; }
+  try {
+    const saved = JSON.parse(localStorage.getItem(CART_KEY));
+    if (!saved || saved.version !== CART_VERSION) {
+      localStorage.removeItem(CART_KEY);
+      return [];
+    }
+    return saved.items || [];
+  } catch { return []; }
 }
 
 function saveCart(items) {
-  localStorage.setItem(CART_KEY, JSON.stringify(items));
+  localStorage.setItem(CART_KEY, JSON.stringify({ version: CART_VERSION, items }));
 }
 
-// TO:
 function formatPrice(n) {
   return '₦' + n.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -27,32 +31,30 @@ function formatPrice(n) {
 // ---------- RENDER ----------
 
 function render() {
-  const cart = getCart();
-  const layout   = document.getElementById('cart-layout');
-  const emptyEl  = document.getElementById('cart-empty');
+  const cart      = getCart();
+  const layout    = document.getElementById('cart-layout');
+  const emptyEl   = document.getElementById('cart-empty');
   const successEl = document.getElementById('checkout-success');
-  const subtitle = document.getElementById('cart-subtitle');
-  const list     = document.getElementById('cart-items-list');
-  const countEl  = document.getElementById('cart-count');
+  const subtitle  = document.getElementById('cart-subtitle');
+  const list      = document.getElementById('cart-items-list');
+  const countEl   = document.getElementById('cart-count');
 
-  // nav badge
   const totalQty = cart.reduce((s, i) => s + i.qty, 0);
   if (countEl) countEl.textContent = totalQty;
   if (subtitle) subtitle.textContent = totalQty === 0 ? '' : totalQty + (totalQty === 1 ? ' item' : ' items');
 
   if (cart.length === 0) {
-    if (layout)   layout.style.display   = 'none';
-    if (emptyEl)  emptyEl.style.display  = 'block';
+    if (layout)    layout.style.display    = 'none';
+    if (emptyEl)   emptyEl.style.display   = 'block';
     if (successEl) successEl.style.display = 'none';
     return;
   }
 
-  if (layout)   layout.style.display   = 'grid';
-  if (emptyEl)  emptyEl.style.display  = 'none';
+  if (layout)    layout.style.display    = 'grid';
+  if (emptyEl)   emptyEl.style.display   = 'none';
   if (successEl) successEl.style.display = 'none';
 
-  // Build items HTML
-  list.innerHTML = cart.map(item => `
+list.innerHTML = cart.map(item => `
     <div class="cart-item">
       <div class="cart-item-img">
         ${item.img
@@ -62,7 +64,7 @@ function render() {
       </div>
       <div class="cart-item-info">
         <span class="cart-item-name">${item.name}</span>
-        <span class="cart-item-variant">${[item.colour, item.size ? 'Size ' + item.size : ''].filter(Boolean).join(' / ')}</span>
+        <span class="cart-item-variant">${[item.colourNote ? `Custom: ${item.colourNote}` : item.colour, item.size ? 'Size ' + item.size : ''].filter(Boolean).join(' / ')}</span>
         <span class="cart-item-unit-price">${formatPrice(item.price)} each</span>
         <button class="cart-item-remove" onclick="removeItem('${item.id}')">Remove</button>
       </div>
@@ -82,13 +84,12 @@ function render() {
 
 function calcSummary(cart) {
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const discount = discountApplied ? subtotal * 0.10 : 0;
-  const taxBase  = subtotal - discount + shipCost;
+  const discount = discountApplied ? subtotal * discountApplied : 0;
+  const taxBase  = subtotal - discount;
   const tax      = taxBase * TAX_RATE;
   const total    = taxBase + tax;
 
   document.getElementById('s-subtotal').textContent = formatPrice(subtotal);
-  document.getElementById('s-shipping').textContent = shipLabel;
   document.getElementById('s-tax').textContent      = formatPrice(tax);
   document.getElementById('s-total').textContent    = formatPrice(total);
 
@@ -119,51 +120,71 @@ function removeItem(id) {
   render();
 }
 
-function setShip(cost, label) {
-  shipCost  = cost;
-  shipLabel = label;
-  calcSummary(getCart());
-}
-
 document.addEventListener('DOMContentLoaded', render);
 
-function applyPromo() {
+// ---------- PROMO ----------
+// Validation now happens server-side via a Netlify Function
+// (netlify/functions/check-promo.js). The valid codes are never
+// sent to the browser, so they can't be found via view-source or dev tools.
+
+async function applyPromo() {
   const input = document.getElementById('promo-input');
   const msg   = document.getElementById('promo-msg');
-  const code  = input.value.trim().toUpperCase();
+  const code  = input.value.trim();
 
-  // Valid codes — add more as needed
-  const validCodes = ['LARRYB10', 'SAVE10', 'WELCOME10'];
-
-  if (validCodes.includes(code)) {
-    discountApplied = true;
-    msg.textContent = '✓ Code applied — 10% off your order!';
-    msg.className   = 'promo-msg success';
-  } else {
-    discountApplied = false;
-    msg.textContent = 'Invalid code. Try LARRYB10.';
+  if (!code) {
+    msg.textContent = 'Enter a code.';
     msg.className   = 'promo-msg error';
+    return;
+  }
+
+  msg.textContent = 'Checking code...';
+  msg.className   = 'promo-msg';
+
+  try {
+    const res = await fetch('/.netlify/functions/check-promo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+
+    if (!res.ok) throw new Error('Request failed');
+
+    const data = await res.json();
+
+    if (data.valid) {
+      discountApplied = data.discount; // e.g. 0.10
+      msg.textContent = '✓ Code applied — ' + Math.round(data.discount * 100) + '% off your order!';
+      msg.className   = 'promo-msg success';
+    } else {
+      discountApplied = 0;
+      msg.textContent = 'Invalid code.';
+      msg.className   = 'promo-msg error';
+    }
+  } catch (err) {
+    discountApplied = 0;
+    msg.textContent = 'Something went wrong. Please try again.';
+    msg.className   = 'promo-msg error';
+    console.error('Promo check failed:', err);
   }
 
   calcSummary(getCart());
 }
 
+// ---------- CHECKOUT ----------
+
 function checkout() {
   const cart = getCart();
   if (cart.length === 0) return;
 
-  // Calculate total (mirrors calcSummary logic)
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const discount = discountApplied ? subtotal * 0.10 : 0;
-  const taxBase  = subtotal - discount + shipCost;
+  const discount = discountApplied ? subtotal * discountApplied : 0;
+  const taxBase  = subtotal - discount;
   const tax      = taxBase * TAX_RATE;
   const total    = taxBase + tax;
 
-  // Paystack needs amount in kobo (multiply by 100)
-  // Your prices are in $, so if you're charging in NGN update the prices in your products
   const amountInKobo = Math.round(total * 100);
 
-  // Get customer email
   const customerEmail = prompt('Please enter your email address to continue:');
   if (!customerEmail || !customerEmail.includes('@')) {
     alert('A valid email address is required to complete your order.');
@@ -173,7 +194,7 @@ function checkout() {
   const paystackInstance = new PaystackPop();
 
   paystackInstance.newTransaction({
-    key: "pk_live_f5c22feb665d930ab27f22ff18190de674759e42", // 🔁 swap for pk_live_... when Paystack activates you
+    key: "pk_live_f5c22feb665d930ab27f22ff18190de674759e42",
     email: customerEmail,
     amount: amountInKobo,
     currency: 'NGN',
@@ -188,22 +209,15 @@ function checkout() {
         }
       ]
     },
-
     onSuccess: function (transaction) {
-      // Payment confirmed — now show success screen
       const layout    = document.getElementById('cart-layout');
       const successEl = document.getElementById('checkout-success');
-
       layout.style.display    = 'none';
       successEl.style.display = 'block';
-
-      // Clear cart
       saveCart([]);
       document.getElementById('cart-count').textContent = '0';
-
       console.log('Payment successful! Reference:', transaction.reference);
     },
-
     onCancel: function () {
       alert('Payment was cancelled. Your cart is still saved.');
     }
