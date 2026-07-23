@@ -502,7 +502,7 @@ img {
 .collection-price {
   position: absolute;
   bottom: 15px;
-  left: 15%;
+  left: 20%;
   transform: translateX(-50%);
   color: rgb(255, 250, 250);
   font-weight: 800;

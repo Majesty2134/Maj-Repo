@@ -5,13 +5,12 @@
 emailjs.init("mXCsjq8fkHWgvTnUO");
 
 function goToProduct(img) {
-  const src   = img.src;
-  const name  = img.getAttribute('data-name') || 'Product';
-  const price = img.getAttribute('data-price') || '0';
-  const url   = 'product.html?name=' + encodeURIComponent(name)
-              + '&img='   + encodeURIComponent(src)
-              + '&price=' + encodeURIComponent(price);
-  window.location.href = url;
+  const id = img.getAttribute('data-id');
+  if (!id) {
+    console.error('Product image is missing data-id, cannot navigate.');
+    return;
+  }
+  window.location.href = 'product.html?id=' + encodeURIComponent(id);
 }
 document.addEventListener("DOMContentLoaded", () => {
 

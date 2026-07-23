@@ -1,29 +1,49 @@
 // =============================================
-// LOAD PRODUCT FROM URL
+// LOAD PRODUCT FROM ID
 // =============================================
-(function loadProductFromURL() {
+(function loadProductFromId() {
   const params = new URLSearchParams(window.location.search);
-  const name   = params.get('name');
-  const img    = params.get('img');
+  const id = params.get('id');
+  const product = id ? getProductById(id) : null;
 
-  if (name) {
-    const title      = document.getElementById('product-title');
-    const label      = document.getElementById('product-label');
-    const breadcrumb = document.getElementById('breadcrumb-name');
-
-    if (title)      title.textContent      = name.toUpperCase();
-    if (label)      label.textContent      = name.toUpperCase();
-    if (breadcrumb) breadcrumb.textContent = name;
-
-    document.title = name + ' – Larry B';
+  if (!product) {
+    const title = document.getElementById('product-title');
+    if (title) title.textContent = 'Product not found';
+    console.error('No product found for id:', id);
+    return;
   }
 
-  if (img) {
-    const mainImg = document.getElementById('product-main-img');
-    if (mainImg) {
-      mainImg.src = img;
-      mainImg.alt = name || 'Product Image';
-    }
+  const { name, price, img, category } = product;
+
+  const title      = document.getElementById('product-title');
+  const label      = document.getElementById('product-label');
+  const breadcrumb = document.getElementById('breadcrumb-name');
+  const priceEl    = document.getElementById('product-price');
+
+  if (title)      title.textContent      = name.toUpperCase();
+  if (label)      label.textContent      = name.toUpperCase();
+  if (breadcrumb) breadcrumb.textContent = name;
+  if (priceEl)    priceEl.textContent    = '₦' + price.toLocaleString('en-NG');
+
+  document.title = name + ' – Larry B';
+
+  // Meta description helps search engines show a distinct
+  // snippet for each product instead of one generic one.
+  let metaDesc = document.querySelector('meta[name="description"]');
+  if (!metaDesc) {
+    metaDesc = document.createElement('meta');
+    metaDesc.setAttribute('name', 'description');
+    document.head.appendChild(metaDesc);
+  }
+  metaDesc.setAttribute(
+    'content',
+    `${name} – ₦${price.toLocaleString('en-NG')}. Part of the Larry B Casuals ${category} collection. Premium fabric, expert craftsmanship, made to order.`
+  );
+
+  const mainImg = document.getElementById('product-main-img');
+  if (mainImg) {
+    mainImg.src = img;
+    mainImg.alt = name;
   }
 })();
 
@@ -192,10 +212,11 @@ document.getElementById('addToCart').addEventListener('click', function () {
   if (!colour) { alert('Please select a colour.'); return; }
   if (!size)   { alert('Please select a size.');   return; }
 
-  const name     = document.getElementById('product-title').textContent;
-  const params   = new URLSearchParams(window.location.search);
-  const rawPrice = parseFloat(params.get('price')) || 0;
-  const qty      = parseInt(document.getElementById('qtyValue').textContent) || 1;
+  const params    = new URLSearchParams(window.location.search);
+  const product   = getProductById(params.get('id'));
+  const name      = product ? product.name : document.getElementById('product-title').textContent;
+  const rawPrice  = product ? product.price : 0;
+  const qty       = parseInt(document.getElementById('qtyValue').textContent) || 1;
   const colourVal = colour.getAttribute('data-colour');
   const colourNote = colour.dataset.customNote || null;
   const sizeVal   = size.getAttribute('data-size');
